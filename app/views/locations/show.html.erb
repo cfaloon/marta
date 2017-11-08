@@ -1,0 +1,107 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  Showing bus information for:
+  <%= @location.address %>, <%= @location.city %>
+</p>
+
+
+<% if @nearby_buses.count == 0 %>
+  <p>
+    Actually, there are no nearby buses. Maybe you should stick out your thumb.
+  </p>
+<% else %>
+
+<div class="bus-map" id="map-canvas"></div>
+<script>
+  var userCoords = new google.maps.LatLng(<%= @location.latitude %>, <%= @location.longitude %>);
+  var mapOptions = { center: userCoords,
+                     zoom: 13,
+                     scrollwheel: false };
+
+  var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+</script>
+
+<% @nearby_buses.each_with_index do |bus, index| %>
+
+<script>
+$(document).ready(function (){
+  function initialize(){
+
+   var busCoords = new google.maps.LatLng(<%= bus["LATITUDE"] %>, <%= bus["LONGITUDE"] %>);
+
+    // This is the text for our bus
+    var contentStringBus = "<h1><%= bus['VEHICLE'] %></h1><p>Adherence:<%= bus['ADHERENCE'] %></p>";
+
+    // This is the text for our user
+    var contentStringUser = "You are here!";
+
+    // scaled icon
+    var busIcon = { url: 'https://image.freepik.com/free-icon/bus-front_318-33490.jpg',
+                    scaledSize: new google.maps.Size(25, 25)
+                  }
+
+    // This is the marker that shows where the bus is
+    var busMarker = new google.maps.Marker({
+      position: busCoords,
+      map: map,
+      icon: busIcon,
+      animation: google.maps.Animation.DROP
+    });
+
+    // This is the marker for our users position
+    var userMarker = new google.maps.Marker({
+      position: userCoords,
+      map: map,
+      animation: google.maps.Animation.DROP
+    });
+
+   // Info window and event listener for the bus
+    var infoWindowBus = new google.maps.InfoWindow({
+      content: contentStringBus
+    });
+
+    google.maps.event.addListener(busMarker, 'click', function() {
+      infoWindowBus.open(map, busMarker);
+    });
+
+     // Info window and event listener for the user
+    var infoWindowUser = new google.maps.InfoWindow({
+      content: contentStringUser
+    });
+
+    google.maps.event.addListener(userMarker, 'click', function() {
+      infoWindowUser.open(map, userMarker);
+    });
+
+  }
+
+google.maps.event.addDomListener(window, 'load', initialize);
+});
+
+</script>
+
+
+<% end %>
+
+
+
+<table>
+  <thead>
+    <tr>
+      <th>Route</th><th>Vehicle</th><th>Next Stop</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @nearby_buses.each do |bus| %>
+    <tr>
+      <td><%= bus["ROUTE"] %></td>
+      <td><%= bus["VEHICLE"] %></td>
+      <td><%= bus["TIMEPOINT"] %></td>
+    </tr>
+    <% end %>
+  </tbody>
+</table>
+<% end %>
+
+<%= link_to "Actually I'm at...", new_location_path %>
